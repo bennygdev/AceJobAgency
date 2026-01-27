@@ -1,0 +1,112 @@
+@page
+@model AppSec_Assignment2.Pages.TwoFactorSetupModel
+@{
+    ViewData["Title"] = "Two-Factor Authentication Setup";
+}
+
+<div class="container mx-auto px-4 py-12">
+    <div class="mx-auto max-w-xl">
+        <!-- Header -->
+        <div class="mb-8 text-center">
+            <h1 class="text-3xl font-bold tracking-tight">Two-Factor Authentication</h1>
+            <p class="mt-2 text-muted-foreground">Add an extra layer of security to your account</p>
+        </div>
+
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="alert mb-6">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+                <h2>@TempData["SuccessMessage"]</h2>
+            </div>
+        }
+
+        <!-- Status Card -->
+        <div class="card mb-6">
+            <section class="py-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-4">
+                        <div class="flex h-12 w-12 items-center justify-center rounded-full @(Model.Is2FAEnabled ? "bg-green-100" : "bg-muted")">
+                            @if (Model.Is2FAEnabled)
+                            {
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-green-600"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></svg>
+                            }
+                            else
+                            {
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-muted-foreground"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+                            }
+                        </div>
+                        <div>
+                            <h3 class="font-semibold">@(Model.Is2FAEnabled ? "2FA is Enabled" : "2FA is Disabled")</h3>
+                            <p class="text-sm text-muted-foreground">@(Model.Is2FAEnabled ? "Your account is protected" : "Enable for extra security")</p>
+                        </div>
+                    </div>
+                    @if (Model.Is2FAEnabled)
+                    {
+                        <span class="badge">Active</span>
+                    }
+                </div>
+            </section>
+        </div>
+
+        <!-- Info Card -->
+        <div class="card mb-6">
+            <header>
+                <h2>How it works</h2>
+            </header>
+            <section>
+                <div class="space-y-4">
+                    <div class="flex gap-4">
+                        <div class="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-semibold flex-shrink-0">1</div>
+                        <div>
+                            <h4 class="font-medium text-sm">Enter your password</h4>
+                            <p class="text-sm text-muted-foreground">Log in with your email and password as usual</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-4">
+                        <div class="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-semibold flex-shrink-0">2</div>
+                        <div>
+                            <h4 class="font-medium text-sm">Receive verification code</h4>
+                            <p class="text-sm text-muted-foreground">We'll send a 6-digit code to your email</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-4">
+                        <div class="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-semibold flex-shrink-0">3</div>
+                        <div>
+                            <h4 class="font-medium text-sm">Enter the code</h4>
+                            <p class="text-sm text-muted-foreground">Enter the code to complete your login</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Action Card -->
+        <div class="card">
+            <section class="py-4">
+                @if (Model.Is2FAEnabled)
+                {
+                    <form method="post" asp-page-handler="Disable" onsubmit="return confirm('Are you sure you want to disable two-factor authentication? This will make your account less secure.')">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn w-full bg-destructive text-destructive-foreground hover:bg-destructive/90 flex items-center justify-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/></svg>
+                            Disable Two-Factor Authentication
+                        </button>
+                    </form>
+                }
+                else
+                {
+                    <form method="post" asp-page-handler="Enable">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn w-full flex items-center justify-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></svg>
+                            Enable Two-Factor Authentication
+                        </button>
+                    </form>
+                }
+            </section>
+            <footer class="flex justify-center">
+                <a asp-page="/Index" class="text-sm text-muted-foreground hover:text-foreground">← Back to Dashboard</a>
+            </footer>
+        </div>
+    </div>
+</div>

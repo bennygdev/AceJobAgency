@@ -1,0 +1,459 @@
+@page
+@model AppSec_Assignment2.Pages.RegisterModel
+@{
+    ViewData["Title"] = "Register";
+}
+
+<div class="container mx-auto px-4 py-12">
+    <div class="mx-auto max-w-2xl">
+        <!-- Header -->
+        <div class="mb-8 text-center">
+            <h1 class="text-3xl font-bold tracking-tight">Create an account</h1>
+            <p class="mt-2 text-muted-foreground">Join Ace Job Agency and find your dream career</p>
+        </div>
+
+        <!-- Card -->
+        <div class="card w-full">
+            <header>
+                <h2>Registration Form</h2>
+                <p>Fill in your details to create a new account</p>
+            </header>
+            <section>
+                <form method="post" enctype="multipart/form-data" id="registerForm" class="form grid gap-6">
+                    @Html.AntiForgeryToken()
+                    
+                    <div asp-validation-summary="ModelOnly" class="validation-summary-errors"></div>
+
+                    <!-- Name Row -->
+                    <div class="grid gap-4 sm:grid-cols-2">
+                        <div class="grid gap-2">
+                            <label asp-for="Input.FirstName">First Name</label>
+                            <input asp-for="Input.FirstName" type="text" placeholder="John" />
+                            <span asp-validation-for="Input.FirstName"></span>
+                        </div>
+                        <div class="grid gap-2">
+                            <label asp-for="Input.LastName">Last Name</label>
+                            <input asp-for="Input.LastName" type="text" placeholder="Doe" />
+                            <span asp-validation-for="Input.LastName"></span>
+                        </div>
+                    </div>
+
+                    <!-- Gender & NRIC Row -->
+                    <div class="grid gap-4 sm:grid-cols-2">
+                        <div class="grid gap-2">
+                            <label asp-for="Input.Gender">Gender</label>
+                            <select asp-for="Input.Gender">
+                                <option value="">Select gender</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Other">Other</option>
+                                <option value="Prefer not to say">Prefer not to say</option>
+                            </select>
+                            <span asp-validation-for="Input.Gender"></span>
+                        </div>
+                        <div class="grid gap-2">
+                            <label asp-for="Input.NRIC">NRIC</label>
+                            <input asp-for="Input.NRIC" type="text" placeholder="S1234567A" maxlength="9" class="uppercase" />
+                            <p class="text-sm text-muted-foreground">Your NRIC will be encrypted</p>
+                            <span asp-validation-for="Input.NRIC"></span>
+                        </div>
+                    </div>
+
+                    <!-- Email -->
+                    <div class="grid gap-2">
+                        <label asp-for="Input.Email">Email Address</label>
+                        <input asp-for="Input.Email" type="email" placeholder="john.doe@example.com" />
+                        <span asp-validation-for="Input.Email"></span>
+                    </div>
+
+                    <!-- Password -->
+                    <div class="grid gap-2">
+                        <label asp-for="Input.Password">Password</label>
+                        <div class="relative">
+                            <input asp-for="Input.Password" type="password" id="password" placeholder="Create a strong password" />
+                            <button type="button" class="toggle-password absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" data-target="password">
+                                <svg class="eye-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                                <svg class="eye-off-icon hidden" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>
+                            </button>
+                        </div>
+                        <span asp-validation-for="Input.Password"></span>
+                        
+                        <!-- Password Strength -->
+                        <div class="mt-2 space-y-2">
+                            <div class="flex items-center gap-2">
+                                <div class="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
+                                    <div id="strengthBar" class="h-full password-strength-bar w-0 transition-all"></div>
+                                </div>
+                                <span id="strengthText" class="text-xs text-muted-foreground min-w-16">Strength</span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
+                                <span id="req-length" class="requirement-unmet flex items-center gap-1"><span class="req-icon">○</span> 12+ characters</span>
+                                <span id="req-lower" class="requirement-unmet flex items-center gap-1"><span class="req-icon">○</span> Lowercase</span>
+                                <span id="req-upper" class="requirement-unmet flex items-center gap-1"><span class="req-icon">○</span> Uppercase</span>
+                                <span id="req-number" class="requirement-unmet flex items-center gap-1"><span class="req-icon">○</span> Number</span>
+                                <span id="req-special" class="requirement-unmet flex items-center gap-1"><span class="req-icon">○</span> Special char</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Confirm Password -->
+                    <div class="grid gap-2">
+                        <label asp-for="Input.ConfirmPassword">Confirm Password</label>
+                        <div class="relative">
+                            <input asp-for="Input.ConfirmPassword" type="password" id="confirmPassword" placeholder="Confirm your password" />
+                            <button type="button" class="toggle-password absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" data-target="confirmPassword">
+                                <svg class="eye-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                                <svg class="eye-off-icon hidden" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>
+                            </button>
+                        </div>
+                        <span asp-validation-for="Input.ConfirmPassword"></span>
+                        <p id="passwordMatch" class="text-sm"></p>
+                    </div>
+
+                    <!-- Date of Birth -->
+                    <div class="grid gap-2">
+                        <label>Date of Birth</label>
+                        <div class="date-picker-group">
+                            <select id="dobDay" name="dobDay" aria-label="Day">
+                                <option value="">Day</option>
+                                @for (int i = 1; i <= 31; i++)
+                                {
+                                    <option value="@i">@i</option>
+                                }
+                            </select>
+                            <select id="dobMonth" name="dobMonth" aria-label="Month">
+                                <option value="">Month</option>
+                                <option value="1">January</option>
+                                <option value="2">February</option>
+                                <option value="3">March</option>
+                                <option value="4">April</option>
+                                <option value="5">May</option>
+                                <option value="6">June</option>
+                                <option value="7">July</option>
+                                <option value="8">August</option>
+                                <option value="9">September</option>
+                                <option value="10">October</option>
+                                <option value="11">November</option>
+                                <option value="12">December</option>
+                            </select>
+                            <select id="dobYear" name="dobYear" aria-label="Year">
+                                <option value="">Year</option>
+                                @for (int year = DateTime.Today.Year - 16; year >= DateTime.Today.Year - 100; year--)
+                                {
+                                    <option value="@year">@year</option>
+                                }
+                            </select>
+                        </div>
+                        <input type="hidden" asp-for="Input.DateOfBirth" id="dateOfBirthHidden" />
+                        <p class="text-sm text-muted-foreground">You must be at least 16 years old</p>
+                        <span asp-validation-for="Input.DateOfBirth"></span>
+                    </div>
+
+                    <!-- Resume Upload -->
+                    <div class="grid gap-2">
+                        <label asp-for="Input.Resume">Resume (Optional)</label>
+                        <div class="flex items-center justify-center w-full">
+                            <label for="resumeInput" class="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed rounded-lg cursor-pointer hover:bg-muted/50 transition-colors border-input">
+                                <div class="flex flex-col items-center justify-center py-4">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-muted-foreground mb-2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                                    <p class="text-sm text-muted-foreground"><span id="fileLabel">Click to upload</span></p>
+                                    <p class="text-xs text-muted-foreground">.docx or .pdf (Max 5MB)</p>
+                                </div>
+                                <input asp-for="Input.Resume" type="file" id="resumeInput" class="hidden" accept=".docx,.pdf" />
+                            </label>
+                        </div>
+                        <span asp-validation-for="Input.Resume"></span>
+                    </div>
+
+                    <!-- Who Am I -->
+                    <div class="grid gap-2">
+                        <label asp-for="Input.WhoAmI">Who Am I</label>
+                        <textarea asp-for="Input.WhoAmI" rows="4" placeholder="Tell us about yourself, your skills, experience, and career goals..."></textarea>
+                        <p class="text-sm text-muted-foreground">All special characters are allowed</p>
+                        <span asp-validation-for="Input.WhoAmI"></span>
+                    </div>
+
+                    <input type="hidden" asp-for="Input.ReCaptchaToken" id="recaptchaToken" />
+                </form>
+            </section>
+            <footer class="flex flex-col items-center gap-4">
+                <button type="submit" form="registerForm" class="btn w-full" id="submitBtn">
+                    <span id="btnText">Create Account</span>
+                    <span id="btnLoading" class="hidden flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="animate-spin"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                        Creating...
+                    </span>
+                </button>
+                <p class="text-center text-sm text-muted-foreground">
+                    Already have an account? <a asp-page="/Login" class="underline-offset-4 hover:underline font-medium">Sign in</a>
+                </p>
+            </footer>
+        </div>
+
+        <!-- reCAPTCHA Notice -->
+        <p class="mt-6 text-center text-xs text-muted-foreground">
+            Protected by reCAPTCHA. 
+            <a href="https://policies.google.com/privacy" target="_blank" class="underline">Privacy</a> · 
+            <a href="https://policies.google.com/terms" target="_blank" class="underline">Terms</a>
+        </p>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="https://www.google.com/recaptcha/api.js?render=@Model.ReCaptchaSiteKey"></script>
+    <script>
+        const password = document.getElementById('password');
+        const confirmPassword = document.getElementById('confirmPassword');
+
+        password.addEventListener('input', function() {
+            checkPasswordStrength(this.value);
+            checkPasswordMatch();
+        });
+
+        confirmPassword.addEventListener('input', checkPasswordMatch);
+
+        function checkPasswordStrength(pwd) {
+            let strength = 0;
+            const requirements = {
+                'req-length': pwd.length >= 12,
+                'req-lower': /[a-z]/.test(pwd),
+                'req-upper': /[A-Z]/.test(pwd),
+                'req-number': /\d/.test(pwd),
+                'req-special': /[!@@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(pwd)
+            };
+
+            Object.entries(requirements).forEach(([id, met]) => {
+                const el = document.getElementById(id);
+                const icon = el.querySelector('.req-icon');
+                if (met) {
+                    strength++;
+                    el.classList.remove('requirement-unmet');
+                    el.classList.add('requirement-met');
+                    icon.textContent = '✓';
+                } else {
+                    el.classList.remove('requirement-met');
+                    el.classList.add('requirement-unmet');
+                    icon.textContent = '○';
+                }
+            });
+
+            const bar = document.getElementById('strengthBar');
+            const text = document.getElementById('strengthText');
+            bar.style.width = (strength / 5 * 100) + '%';
+
+            bar.className = 'h-full password-strength-bar w-0 transition-all';
+            if (strength === 0) { text.textContent = 'Strength'; }
+            else if (strength <= 2) { bar.classList.add('strength-weak'); text.textContent = 'Weak'; }
+            else if (strength <= 3) { bar.classList.add('strength-fair'); text.textContent = 'Fair'; }
+            else if (strength <= 4) { bar.classList.add('strength-good'); text.textContent = 'Good'; }
+            else { bar.classList.add('strength-strong'); text.textContent = 'Strong'; }
+        }
+
+        function checkPasswordMatch() {
+            const indicator = document.getElementById('passwordMatch');
+            if (confirmPassword.value.length === 0) {
+                indicator.textContent = '';
+                indicator.style.color = '';
+            } else if (password.value === confirmPassword.value) {
+                indicator.textContent = '✓ Passwords match';
+                indicator.style.color = '#22c55e';
+                indicator.style.fontSize = '0.75rem';
+            } else {
+                indicator.textContent = '✗ Passwords do not match';
+                indicator.style.color = '#dc2626';
+                indicator.style.fontSize = '0.75rem';
+            }
+        }
+
+        // Password visibility toggle with icon update
+        document.querySelectorAll('.toggle-password').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                const targetId = this.getAttribute('data-target');
+                const input = document.getElementById(targetId);
+                const eyeIcon = this.querySelector('.eye-icon');
+                const eyeOffIcon = this.querySelector('.eye-off-icon');
+                
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    eyeIcon.classList.add('hidden');
+                    eyeOffIcon.classList.remove('hidden');
+                } else {
+                    input.type = 'password';
+                    eyeIcon.classList.remove('hidden');
+                    eyeOffIcon.classList.add('hidden');
+                }
+            });
+        });
+
+        document.getElementById('resumeInput').addEventListener('change', function() {
+            document.getElementById('fileLabel').textContent = this.files.length > 0 ? this.files[0].name : 'Click to upload';
+        });
+
+        document.getElementById('Input_NRIC').addEventListener('input', function() {
+            this.value = this.value.toUpperCase();
+        });
+
+        // Date of Birth dropdown handling
+        const dobDay = document.getElementById('dobDay');
+        const dobMonth = document.getElementById('dobMonth');
+        const dobYear = document.getElementById('dobYear');
+        const dateOfBirthHidden = document.getElementById('dateOfBirthHidden');
+
+        function updateDateOfBirth() {
+            const day = dobDay.value;
+            const month = dobMonth.value;
+            const year = dobYear.value;
+            
+            if (day && month && year) {
+                // Validate the date is real (e.g., Feb 30 doesn't exist)
+                const date = new Date(year, month - 1, day);
+                if (date.getFullYear() == year && 
+                    date.getMonth() == month - 1 && 
+                    date.getDate() == day) {
+                    // Format as yyyy-MM-dd for the hidden input
+                    const formattedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+                    dateOfBirthHidden.value = formattedDate;
+                } else {
+                    // Invalid date (e.g., Feb 31)
+                    dateOfBirthHidden.value = '';
+                }
+            } else {
+                dateOfBirthHidden.value = '';
+            }
+        }
+
+        // Update days based on month and year selection
+        function updateDaysInMonth() {
+            const month = parseInt(dobMonth.value) || 1;
+            const year = parseInt(dobYear.value) || new Date().getFullYear();
+            const daysInMonth = new Date(year, month, 0).getDate();
+            const currentDay = dobDay.value;
+
+            // Store current selection
+            dobDay.innerHTML = '<option value="">Day</option>';
+            for (let i = 1; i <= daysInMonth; i++) {
+                const option = document.createElement('option');
+                option.value = i;
+                option.textContent = i;
+                if (i == currentDay) option.selected = true;
+                dobDay.appendChild(option);
+            }
+        }
+
+        dobDay.addEventListener('change', function() {
+            updateDateOfBirth();
+            // Clear any validation error when user selects a date
+            clearDateValidationError();
+        });
+        dobMonth.addEventListener('change', function() {
+            updateDaysInMonth();
+            updateDateOfBirth();
+            clearDateValidationError();
+        });
+        dobYear.addEventListener('change', function() {
+            updateDaysInMonth();
+            updateDateOfBirth();
+            clearDateValidationError();
+        });
+
+        function clearDateValidationError() {
+            const dobError = document.querySelector('[data-valmsg-for="Input.DateOfBirth"]');
+            if (dobError && dateOfBirthHidden.value) {
+                dobError.textContent = '';
+                dobError.classList.remove('field-validation-error');
+                dobError.classList.add('field-validation-valid');
+            }
+        }
+
+        // Pre-populate dropdowns if there's an existing value
+        if (dateOfBirthHidden.value) {
+            const parts = dateOfBirthHidden.value.split('-');
+            if (parts.length === 3) {
+                dobYear.value = parseInt(parts[0]);
+                dobMonth.value = parseInt(parts[1]);
+                updateDaysInMonth();
+                dobDay.value = parseInt(parts[2]);
+            }
+        }
+
+        const siteKey = '@Model.ReCaptchaSiteKey';
+        const form = document.getElementById('registerForm');
+        let isSubmitting = false;
+        
+        // Form submission handler
+        form.addEventListener('submit', function(e) {
+            // Prevent double submission
+            if (isSubmitting) {
+                e.preventDefault();
+                return false;
+            }
+            
+            // Validate the date is filled
+            if (!dateOfBirthHidden.value) {
+                e.preventDefault();
+                const dobError = document.querySelector('[data-valmsg-for="Input.DateOfBirth"]');
+                if (dobError) {
+                    dobError.textContent = 'Please select a valid date of birth';
+                    dobError.classList.add('field-validation-error');
+                    dobError.classList.remove('field-validation-valid');
+                }
+                // Scroll to the date picker
+                dobDay.focus();
+                return false;
+            }
+            
+            // Check if jQuery validation exists and if form is valid
+            if (typeof $ !== 'undefined' && $.validator) {
+                const validator = $(form).validate();
+                if (validator && !$(form).valid()) {
+                    e.preventDefault();
+                    return false;
+                }
+            }
+            
+            // If reCAPTCHA is configured, handle it
+            if (siteKey && siteKey !== 'YOUR_RECAPTCHA_SITE_KEY' && typeof grecaptcha !== 'undefined') {
+                e.preventDefault();
+                isSubmitting = true;
+                document.getElementById('btnText').classList.add('hidden');
+                document.getElementById('btnLoading').classList.remove('hidden');
+                document.getElementById('submitBtn').disabled = true;
+
+                grecaptcha.ready(function() {
+                    grecaptcha.execute(siteKey, {action: 'register'}).then(function(token) {
+                        document.getElementById('recaptchaToken').value = token;
+                        // Use native submit to bypass event handler
+                        HTMLFormElement.prototype.submit.call(form);
+                    }).catch(function(error) {
+                        console.error('reCAPTCHA error:', error);
+                        isSubmitting = false;
+                        document.getElementById('btnText').classList.remove('hidden');
+                        document.getElementById('btnLoading').classList.add('hidden');
+                        document.getElementById('submitBtn').disabled = false;
+                        // Submit anyway if reCAPTCHA fails
+                        HTMLFormElement.prototype.submit.call(form);
+                    });
+                });
+                return false;
+            }
+            
+            // Show loading state for regular submission
+            isSubmitting = true;
+            document.getElementById('btnText').classList.add('hidden');
+            document.getElementById('btnLoading').classList.remove('hidden');
+            // Let the form submit normally
+        });
+        
+        // Configure jQuery validation to validate hidden fields
+        $(document).ready(function() {
+            if (typeof $ !== 'undefined' && $.validator) {
+                $.validator.setDefaults({
+                    ignore: []
+                });
+                // Re-parse form for unobtrusive validation
+                $.validator.unobtrusive.parse(form);
+            }
+        });
+    </script>
+}
