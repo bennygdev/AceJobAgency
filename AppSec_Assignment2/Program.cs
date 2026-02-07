@@ -10,7 +10,7 @@ builder.Services.AddDbContext<AuthDbContext>();
 // Register custom services
 builder.Services.AddScoped<IEncryptionService, EncryptionService>();
 builder.Services.AddScoped<IAuditLogService, AuditLogService>();
-builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddHttpClient<IEmailService, EmailService>();
 builder.Services.AddHttpClient<IReCaptchaService, ReCaptchaService>();
 
 // Configure session

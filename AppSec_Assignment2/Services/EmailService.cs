@@ -13,11 +13,13 @@ namespace AppSec_Assignment2.Services
     {
         private readonly IConfiguration _configuration;
         private readonly ILogger<EmailService> _logger;
+        private readonly HttpClient _httpClient;
 
-        public EmailService(IConfiguration configuration, ILogger<EmailService> logger)
+        public EmailService(IConfiguration configuration, ILogger<EmailService> logger, HttpClient httpClient)
         {
             _configuration = configuration;
             _logger = logger;
+            _httpClient = httpClient;
         }
 
         public async Task SendPasswordResetEmailAsync(string email, string resetLink)
@@ -42,6 +44,8 @@ namespace AppSec_Assignment2.Services
 
         public async Task Send2FACodeAsync(string email, string code)
         {
+            // Note: This method might be deprecated if we switch entirely to App 2FA, 
+            // but keeping it for now in case of fallback or other notifications.
             var subject = "Ace Job Agency - Your 2FA Verification Code";
             var body = $@"
                 <html>
@@ -63,40 +67,41 @@ namespace AppSec_Assignment2.Services
         {
             try
             {
-                var smtpHost = _configuration["Email:SmtpHost"] ?? "smtp.gmail.com";
-                var smtpPort = int.Parse(_configuration["Email:SmtpPort"] ?? "587");
-                var smtpUser = _configuration["Email:SmtpUser"];
-                var smtpPass = _configuration["Email:SmtpPass"];
-                var fromEmail = _configuration["Email:FromEmail"] ?? smtpUser;
+                var apiKey = _configuration["SMTP2GO:ApiKey"];
+                var senderEmail = _configuration["SMTP2GO:SenderEmail"] ?? "support@bennygoh.me"; // Fallback or from config
 
-                if (string.IsNullOrEmpty(smtpUser) || string.IsNullOrEmpty(smtpPass))
+                if (string.IsNullOrEmpty(apiKey))
                 {
-                    _logger.LogWarning("Email service not configured. Email to {Email} with subject '{Subject}' was not sent.", toEmail, subject);
-                    _logger.LogInformation("Email content: {Body}", body);
+                    _logger.LogWarning("SMTP2GO API Key not configured. Email to {Email} not sent.", toEmail);
                     return;
                 }
 
-                using var client = new SmtpClient(smtpHost, smtpPort)
+                var payload = new
                 {
-                    Credentials = new NetworkCredential(smtpUser, smtpPass),
-                    EnableSsl = true
+                    api_key = apiKey,
+                    to = new[] { toEmail },
+                    sender = senderEmail,
+                    subject = subject,
+                    html_body = body
                 };
 
-                var mailMessage = new MailMessage
-                {
-                    From = new MailAddress(fromEmail!, "Ace Job Agency"),
-                    Subject = subject,
-                    Body = body,
-                    IsBodyHtml = true
-                };
-                mailMessage.To.Add(toEmail);
+                var response = await _httpClient.PostAsJsonAsync("https://api.smtp2go.com/v3/email/send", payload);
 
-                await client.SendMailAsync(mailMessage);
-                _logger.LogInformation("Email sent successfully to {Email}", toEmail);
+                if (response.IsSuccessStatusCode)
+                {
+                    _logger.LogInformation("Email sent successfully to {Email} via API", toEmail);
+                }
+                else
+                {
+                   var errorContent = await response.Content.ReadAsStringAsync();
+                   _logger.LogError("Failed to send email to {Email}. Status: {Status}. Details: {Details}", toEmail, response.StatusCode, errorContent);
+                   // Throwing exception to let caller know it failed (e.g. for retries or user feedback)
+                   throw new Exception($"Failed to send email: {response.StatusCode} - {errorContent}");
+                }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to send email to {Email}", toEmail);
+                _logger.LogError(ex, "Exception while sending email to {Email}", toEmail);
                 throw;
             }
         }

@@ -10,7 +10,7 @@
     <div class="container mx-auto px-4 py-8">
         <!-- Welcome Header -->
         <div class="mb-8">
-            <h1 class="text-3xl font-bold tracking-tight">Welcome back, @HttpUtility.HtmlDecode(Model.CurrentMember.FirstName)!</h1>
+            <h1 class="text-3xl font-bold tracking-tight">Welcome back, @Model.CurrentMember.FirstName!</h1>
             <p class="text-muted-foreground mt-1">Here's your profile information</p>
         </div>
 
@@ -23,7 +23,7 @@
                             @Model.CurrentMember.FirstName[0]@Model.CurrentMember.LastName[0]
                         </div>
                         <div>
-                            <h2 class="text-lg font-semibold">@HttpUtility.HtmlDecode(Model.CurrentMember.FirstName) @HttpUtility.HtmlDecode(Model.CurrentMember.LastName)</h2>
+                            <h2 class="text-lg font-semibold">@Model.CurrentMember.FirstName @Model.CurrentMember.LastName</h2>
                             <p class="text-sm text-muted-foreground">@Model.CurrentMember.Email</p>
                         </div>
                     </div>
@@ -87,7 +87,14 @@
                 </section>
                 <footer class="flex flex-col gap-2">
                     <a asp-page="/ChangePassword" class="btn-outline w-full text-center">Change Password</a>
-                    <a asp-page="/TwoFactorSetup" class="btn-outline w-full text-center">@(Model.CurrentMember.TwoFactorEnabled ? "Manage 2FA" : "Enable 2FA")</a>
+                    @if (Model.CurrentMember.TwoFactorEnabled)
+                    {
+                        <a asp-page="/DisableAuthenticator" class="btn-outline w-full text-center">Disable 2FA</a>
+                    }
+                    else
+                    {
+                        <a asp-page="/EnableAuthenticator" class="btn-outline w-full text-center">Enable 2FA</a>
+                    }
                 </footer>
             </div>
 
@@ -97,7 +104,7 @@
                     <h2>Who Am I</h2>
                 </header>
                 <section>
-                    <p class="text-sm text-muted-foreground whitespace-pre-wrap">@HttpUtility.HtmlDecode(Model.CurrentMember.WhoAmI)</p>
+                    <p class="text-sm text-muted-foreground whitespace-pre-wrap">@Model.CurrentMember.WhoAmI</p>
                 </section>
             </div>
 

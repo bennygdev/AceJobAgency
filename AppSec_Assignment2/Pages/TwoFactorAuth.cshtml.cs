@@ -4,27 +4,22 @@ using Microsoft.EntityFrameworkCore;
 using AppSec_Assignment2.Model;
 using AppSec_Assignment2.ViewModels;
 using AppSec_Assignment2.Services;
-using System.Security.Cryptography;
+using OtpNet;
 
 namespace AppSec_Assignment2.Pages
 {
     public class TwoFactorAuthModel : PageModel
     {
         private readonly AuthDbContext _context;
-        private readonly IEmailService _emailService;
         private readonly IAuditLogService _auditLogService;
         private readonly ILogger<TwoFactorAuthModel> _logger;
 
-        private static readonly Dictionary<int, (string Code, DateTime Expiry)> _pendingCodes = new();
-
         public TwoFactorAuthModel(
             AuthDbContext context,
-            IEmailService emailService,
             IAuditLogService auditLogService,
             ILogger<TwoFactorAuthModel> logger)
         {
             _context = context;
-            _emailService = emailService;
             _auditLogService = auditLogService;
             _logger = logger;
         }
@@ -47,9 +42,6 @@ namespace AppSec_Assignment2.Pages
             Input.Email = email;
             MaskedEmail = MaskEmail(email);
 
-            // Generate and send 2FA code
-            await SendVerificationCodeAsync(memberId.Value, email);
-
             return Page();
         }
 
@@ -57,8 +49,7 @@ namespace AppSec_Assignment2.Pages
         {
             var memberId = HttpContext.Session.GetInt32("2FA_MemberId");
             var email = HttpContext.Session.GetString("2FA_Email");
-            var rememberMe = HttpContext.Session.GetString("2FA_RememberMe") == "True";
-
+            
             if (!memberId.HasValue || string.IsNullOrEmpty(email))
             {
                 return RedirectToPage("/Login");
@@ -72,107 +63,59 @@ namespace AppSec_Assignment2.Pages
                 return Page();
             }
 
-            // Verify the code
-            if (!VerifyCode(memberId.Value, Input.Code))
-            {
-                ModelState.AddModelError("Input.Code", "Invalid or expired verification code");
-                await _auditLogService.LogAsync(memberId.Value, "2FA_FAILED", 
-                    "Invalid 2FA code entered", HttpContext);
-                return Page();
-            }
-
-            // Clear pending code
-            _pendingCodes.Remove(memberId.Value);
-
-            // Clear 2FA session data
-            HttpContext.Session.Remove("2FA_MemberId");
-            HttpContext.Session.Remove("2FA_Email");
-            HttpContext.Session.Remove("2FA_RememberMe");
-
-            // Get member and complete login
             var member = await _context.Members.FindAsync(memberId.Value);
             if (member == null)
             {
                 return RedirectToPage("/Login");
             }
 
-            // Complete login
-            member.FailedLoginAttempts = 0;
-            member.LastLogin = DateTime.UtcNow;
-
-            var sessionId = Guid.NewGuid().ToString();
-            member.SessionId = sessionId;
-
-            await _context.SaveChangesAsync();
-
-            HttpContext.Session.SetInt32("MemberId", member.Id);
-            HttpContext.Session.SetString("SessionId", sessionId);
-            HttpContext.Session.SetString("Email", member.Email);
-            HttpContext.Session.SetString("FirstName", member.FirstName);
-            HttpContext.Session.SetString("LastName", member.LastName);
-
-            await _auditLogService.LogAsync(member.Id, "LOGIN_SUCCESS_2FA", 
-                "User logged in with 2FA", HttpContext);
-
-            _logger.LogInformation("User {Email} logged in with 2FA", member.Email);
-
-            return RedirectToPage("/Index");
-        }
-
-        public async Task<IActionResult> OnPostResendAsync()
-        {
-            var memberId = HttpContext.Session.GetInt32("2FA_MemberId");
-            var email = HttpContext.Session.GetString("2FA_Email");
-
-            if (!memberId.HasValue || string.IsNullOrEmpty(email))
+            // Verify TOTP Code
+            if (string.IsNullOrEmpty(member.TwoFactorSecret))
             {
-                return RedirectToPage("/Login");
+                // Fallback or error state
+                ModelState.AddModelError("", "2FA setup is incomplete.");
+                return Page();
             }
 
-            await SendVerificationCodeAsync(memberId.Value, email);
+            var base32Bytes = Base32Encoding.ToBytes(member.TwoFactorSecret);
+            var totp = new Totp(base32Bytes);
 
-            TempData["Message"] = "A new verification code has been sent to your email.";
-            return RedirectToPage();
-        }
-
-        private async Task SendVerificationCodeAsync(int memberId, string email)
-        {
-            // Generate 6-digit code
-            var code = GenerateVerificationCode();
-            var expiry = DateTime.UtcNow.AddMinutes(5);
-
-            _pendingCodes[memberId] = (code, expiry);
-
-            try
+            if (totp.VerifyTotp(Input.Code, out long timeStepMatched, new VerificationWindow(2, 2)))
             {
-                await _emailService.Send2FACodeAsync(email, code);
-                _logger.LogInformation("2FA code sent to {Email}", email);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to send 2FA code to {Email}", email);
-            }
-        }
+                // Clear 2FA session data
+                HttpContext.Session.Remove("2FA_MemberId");
+                HttpContext.Session.Remove("2FA_Email");
+                HttpContext.Session.Remove("2FA_RememberMe");
 
-        private static string GenerateVerificationCode()
-        {
-            using var rng = RandomNumberGenerator.Create();
-            var bytes = new byte[4];
-            rng.GetBytes(bytes);
-            var num = BitConverter.ToUInt32(bytes, 0) % 1000000;
-            return num.ToString("D6");
-        }
+                // Complete login
+                member.FailedLoginAttempts = 0;
+                member.LastLogin = DateTime.UtcNow;
 
-        private static bool VerifyCode(int memberId, string code)
-        {
-            if (_pendingCodes.TryGetValue(memberId, out var stored))
-            {
-                if (stored.Expiry > DateTime.UtcNow && stored.Code == code)
-                {
-                    return true;
-                }
+                var sessionId = Guid.NewGuid().ToString();
+                member.SessionId = sessionId;
+
+                await _context.SaveChangesAsync();
+
+                HttpContext.Session.SetInt32("MemberId", member.Id);
+                HttpContext.Session.SetString("SessionId", sessionId);
+                HttpContext.Session.SetString("Email", member.Email);
+                HttpContext.Session.SetString("FirstName", member.FirstName);
+                HttpContext.Session.SetString("LastName", member.LastName);
+
+                await _auditLogService.LogAsync(member.Id, "LOGIN_SUCCESS_2FA", 
+                    "User logged in with 2FA", HttpContext);
+
+                _logger.LogInformation("User {Email} logged in with 2FA", member.Email);
+
+                return RedirectToPage("/Index");
             }
-            return false;
+            else
+            {
+                ModelState.AddModelError("Input.Code", "Invalid verification code");
+                await _auditLogService.LogAsync(memberId.Value, "2FA_FAILED", 
+                    "Invalid 2FA code entered", HttpContext);
+                return Page();
+            }
         }
 
         private static string MaskEmail(string email)

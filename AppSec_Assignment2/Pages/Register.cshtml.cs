@@ -152,8 +152,8 @@ namespace AppSec_Assignment2.Pages
             // Create member
             var member = new Member
             {
-                FirstName = HttpUtility.HtmlEncode(Input.FirstName.Trim()),
-                LastName = HttpUtility.HtmlEncode(Input.LastName.Trim()),
+                FirstName = Input.FirstName.Trim(),
+                LastName = Input.LastName.Trim(),
                 Gender = Input.Gender,
                 NRIC = _encryptionService.Encrypt(Input.NRIC), // Encrypted
                 Email = Input.Email.ToLower().Trim(),
@@ -161,7 +161,7 @@ namespace AppSec_Assignment2.Pages
                 DateOfBirth = Input.DateOfBirth!.Value,
                 ResumePath = resumePath,
                 ResumeFileName = resumeFileName,
-                WhoAmI = HttpUtility.HtmlEncode(Input.WhoAmI), // Encoded to prevent XSS
+                WhoAmI = Input.WhoAmI, // Razor handles output encoding for XSS prevention
                 CreatedAt = DateTime.UtcNow,
                 LastPasswordChange = DateTime.UtcNow
             };
