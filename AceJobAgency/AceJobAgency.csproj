@@ -8,17 +8,7 @@
     <AssemblyName>AceJobAgency</AssemblyName>
   </PropertyGroup>
 
-  <ItemGroup>
-    <Content Remove="appsettings.Template.json" />
-  </ItemGroup>
 
-  <ItemGroup>
-    <Compile Include="appsettings.Template.json" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="appsettings.Template.json" />
-  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.23" />
