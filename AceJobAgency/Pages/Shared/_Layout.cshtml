@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+    <meta http-equiv="X-Frame-Options" content="DENY" />
+    <meta http-equiv="X-XSS-Protection" content="1; mode=block" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+    <title>@ViewData["Title"] - Ace Job Agency</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.jsdelivr.net/npm/@@tailwindcss/browser@4"></script>
+    
+    <!-- Basecoat UI -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/basecoat-css@@0.3.10/dist/basecoat.cdn.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/basecoat-css@@0.3.10/dist/js/all.min.js" defer></script>
+    
+    <!-- Custom styles -->
+    <link rel="stylesheet" href="~/css/site.css" />
+    <style>
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        .password-strength-bar {
+            height: 4px;
+            border-radius: 2px;
+            transition: all 0.3s ease;
+        }
+        .strength-weak { background-color: #ef4444; }
+        .strength-fair { background-color: #f59e0b; }
+        .strength-good { background-color: #3b82f6; }
+        .strength-strong { background-color: #22c55e; }
+        .requirement-met { color: #22c55e; }
+        .requirement-unmet { color: #6b7280; }
+        
+        /* Validation error styles - inline for guaranteed loading */
+        .field-validation-error,
+        span.field-validation-error,
+        span[data-valmsg-for]:not(:empty):not(.field-validation-valid) {
+            color: #dc2626 !important;
+            font-size: 0.75rem !important;
+            font-weight: 500;
+            margin-top: 0.25rem;
+            display: block;
+        }
+        span[data-valmsg-for].field-validation-error {
+            color: #dc2626 !important;
+            font-size: 0.75rem !important;
+        }
+        /* Hide valid spans */
+        .field-validation-valid,
+        span[data-valmsg-for]:empty {
+            display: none;
+        }
+        .input-validation-error {
+            border-color: #dc2626 !important;
+        }
+        .validation-summary-errors {
+            color: #dc2626;
+            font-size: 0.875rem;
+            background-color: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 0.5rem;
+            padding: 0.75rem 1rem;
+            margin-bottom: 1rem;
+        }
+        .validation-summary-errors ul {
+            margin: 0;
+            padding-left: 1.25rem;
+        }
+        .validation-summary-valid {
+            display: none;
+        }
+        .alert-destructive:not(:empty) {
+            color: #dc2626;
+            font-size: 0.875rem;
+            background-color: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 0.5rem;
+            padding: 0.75rem 1rem;
+            margin-bottom: 1rem;
+        }
+        .date-picker-group {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr 1fr;
+            gap: 0.5rem;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-background text-foreground">
+    <!-- Navigation -->
+    <header class="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div class="container mx-auto flex h-14 items-center px-4">
+            <a href="/" class="flex items-center gap-2 font-semibold">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                <span>Ace Job Agency</span>
+            </a>
+            
+            <nav class="ml-auto flex items-center gap-4">
+                @if (Context.Session.GetInt32("MemberId").HasValue)
+                {
+                    var firstName = Context.Session.GetString("FirstName") ?? "User";
+                    var lastName = Context.Session.GetString("LastName") ?? "";
+                    
+                    <a asp-page="/Index" class="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Dashboard</a>
+                    
+                    <div id="user-dropdown" class="dropdown-menu">
+                        <button type="button" id="user-dropdown-trigger" aria-haspopup="menu" aria-controls="user-dropdown-menu" aria-expanded="false" class="flex items-center gap-2 text-sm font-medium cursor-pointer">
+                            <span class="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-semibold">
+                                @(firstName.Length > 0 ? firstName[0].ToString().ToUpper() : "")@(lastName.Length > 0 ? lastName[0].ToString().ToUpper() : "")
+                            </span>
+                            <span class="hidden sm:inline">@firstName</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                        </button>
+                        <div id="user-dropdown-popover" data-popover aria-hidden="true" class="min-w-48">
+                            <div role="menu" id="user-dropdown-menu" aria-labelledby="user-dropdown-trigger">
+                                <a asp-page="/Index" role="menuitem">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
+                                    Dashboard
+                                </a>
+                                <hr role="separator" />
+                                <a asp-page="/ChangePassword" role="menuitem">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" /></svg>
+                                    Change Password
+                                </a>
+                                <a asp-page="/TwoFactorSetup" role="menuitem">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+                                    Two-Factor Auth
+                                </a>
+                                <hr role="separator" />
+                                <a asp-page="/Logout" role="menuitem" class="text-destructive">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                                    Logout
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <a asp-page="/Login" class="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Login</a>
+                    <a asp-page="/Register" class="btn btn-sm">Register</a>
+                }
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1">
+        @RenderBody()
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t py-6 md:py-0">
+        <div class="container mx-auto flex flex-col items-center justify-between gap-4 px-4 md:h-14 md:flex-row">
+            <p class="text-center text-sm text-muted-foreground">
+                &copy; @DateTime.Now.Year Ace Job Agency. All rights reserved.
+            </p>
+            <nav class="flex gap-4">
+                <a asp-page="/Privacy" class="text-sm text-muted-foreground hover:text-foreground transition-colors">Privacy Policy</a>
+            </nav>
+        </div>
+    </footer>
+
+    <!-- jQuery for validation -->
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+    
+    @await RenderSectionAsync("Scripts", required: false)
+    
+    <!-- Session timeout warning -->
+    @if (Context.Session.GetInt32("MemberId").HasValue)
+    {
+        <script>
+            let idleTime = 0;
+            const maxIdleTime = 14;
+            
+            document.addEventListener('mousemove', () => idleTime = 0);
+            document.addEventListener('keypress', () => idleTime = 0);
+            document.addEventListener('click', () => idleTime = 0);
+            
+            setInterval(() => {
+                idleTime++;
+                if (idleTime >= maxIdleTime) {
+                    if (confirm('Your session will expire in 1 minute. Click OK to stay logged in.')) {
+                        fetch('/Index').then(() => idleTime = 0);
+                    }
+                }
+            }, 60000);
+        </script>
+    }
+</body>
+</html>
