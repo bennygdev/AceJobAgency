@@ -1,5 +1,6 @@
 using AceJobAgency.Model;
 using AceJobAgency.Services;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -68,20 +69,43 @@ app.Use(async (context, next) =>
     // Check if user is logged in and session is valid
     var memberId = context.Session.GetInt32("MemberId");
     var sessionId = context.Session.GetString("SessionId");
+    var path = context.Request.Path.Value?.ToLower() ?? "";
     
     if (memberId.HasValue && !string.IsNullOrEmpty(sessionId))
     {
         // Verify session is still valid in database
         using var scope = app.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<AuthDbContext>();
-        var member = await dbContext.Members.FindAsync(memberId.Value);
         
-        if (member == null || member.SessionId != sessionId)
+        // Check against UserSession table instead of Member table
+        var userSession = await dbContext.UserSessions
+            .FirstOrDefaultAsync(s => s.SessionId == sessionId && s.MemberId == memberId.Value && s.IsActive);
+        
+        if (userSession == null)
         {
-            // Session is invalid, clear it
+            // Session is invalid or inactive, clear it
             context.Session.Clear();
             context.Response.Redirect("/Login?message=session_expired");
             return;
+        }
+
+        // Update LastActive timestamp
+        userSession.LastActive = DateTime.UtcNow;
+        await dbContext.SaveChangesAsync();
+
+        // Check password age (Moved from Login to Middleware for continuous enforcement)
+        if (path != "/changepassword" && path != "/logout" && !path.StartsWith("/statuscode") && path != "/error")
+        {
+             var member = await dbContext.Members.FindAsync(memberId.Value);
+             if (member != null && member.LastPasswordChange.HasValue)
+             {
+                 var maxPasswordAgeDays = builder.Configuration.GetValue<int>("Security:MaxPasswordAgeDays", 90);
+                 if (member.LastPasswordChange.Value.AddDays(maxPasswordAgeDays) < DateTime.UtcNow)
+                 {
+                     context.Response.Redirect("/ChangePassword?expired=true");
+                     return;
+                 }
+             }
         }
     }
     

@@ -12,13 +12,14 @@ namespace AceJobAgency.Model
         }
 
         public DbSet<Member> Members { get; set; }
+        public DbSet<UserSession> UserSessions { get; set; }
         public DbSet<AuditLog> AuditLogs { get; set; }
         public DbSet<PasswordHistory> PasswordHistories { get; set; }
         public DbSet<PasswordResetToken> PasswordResetTokens { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            string connectionString = _configuration.GetConnectionString("AuthConnectionString") 
+            string connectionString = _configuration.GetConnectionString("DefaultConnection") 
                 ?? throw new InvalidOperationException("Connection string not configured");
             optionsBuilder.UseSqlServer(connectionString);
         }

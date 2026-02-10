@@ -12,16 +12,12 @@ namespace AceJobAgency.Services
     public class EncryptionService : IEncryptionService
     {
         private readonly byte[] _key;
-        private readonly byte[] _iv;
 
         public EncryptionService(IConfiguration configuration)
         {
             // Get encryption key from configuration
             var keyString = configuration["Encryption:Key"] ?? throw new InvalidOperationException("Encryption key not configured");
-            var ivString = configuration["Encryption:IV"] ?? throw new InvalidOperationException("Encryption IV not configured");
-
             _key = Convert.FromBase64String(keyString);
-            _iv = Convert.FromBase64String(ivString);
         }
 
         public string Encrypt(string plainText)
@@ -31,11 +27,15 @@ namespace AceJobAgency.Services
 
             using var aes = Aes.Create();
             aes.Key = _key;
-            aes.IV = _iv;
+            aes.GenerateIV(); // Generate a random IV for each encryption
+            var iv = aes.IV;
 
-            var encryptor = aes.CreateEncryptor(aes.Key, aes.IV);
+            var encryptor = aes.CreateEncryptor(aes.Key, iv);
 
             using var msEncrypt = new MemoryStream();
+            // Write the IV at the beginning of the stream
+            msEncrypt.Write(iv, 0, iv.Length);
+
             using (var csEncrypt = new CryptoStream(msEncrypt, encryptor, CryptoStreamMode.Write))
             using (var swEncrypt = new StreamWriter(csEncrypt))
             {
@@ -52,15 +52,22 @@ namespace AceJobAgency.Services
 
             try
             {
-                var cipherBytes = Convert.FromBase64String(cipherText);
+                var fullCipher = Convert.FromBase64String(cipherText);
 
                 using var aes = Aes.Create();
                 aes.Key = _key;
-                aes.IV = _iv;
+
+                // Extract the IV from the beginning of the ciphertext
+                var iv = new byte[aes.BlockSize / 8];
+                if (fullCipher.Length < iv.Length)
+                    return "[Decryption Error]"; // Ciphertext too short
+
+                Array.Copy(fullCipher, 0, iv, 0, iv.Length);
+                aes.IV = iv;
 
                 var decryptor = aes.CreateDecryptor(aes.Key, aes.IV);
 
-                using var msDecrypt = new MemoryStream(cipherBytes);
+                using var msDecrypt = new MemoryStream(fullCipher, iv.Length, fullCipher.Length - iv.Length);
                 using var csDecrypt = new CryptoStream(msDecrypt, decryptor, CryptoStreamMode.Read);
                 using var srDecrypt = new StreamReader(csDecrypt);
 
@@ -72,13 +79,13 @@ namespace AceJobAgency.Services
             }
         }
 
-        // Static method to generate new keys for configuration
+        // Static method to generate new key (IV generation is now handled per encryption)
         public static (string Key, string IV) GenerateNewKeys()
         {
             using var aes = Aes.Create();
             aes.GenerateKey();
-            aes.GenerateIV();
-            return (Convert.ToBase64String(aes.Key), Convert.ToBase64String(aes.IV));
+            // IV is not needed in config anymore, but keeping signature compatible or just returning dummy
+            return (Convert.ToBase64String(aes.Key), "Auto-Generated-Per-Encryption");
         }
     }
 }

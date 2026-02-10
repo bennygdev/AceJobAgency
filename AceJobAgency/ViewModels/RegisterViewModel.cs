@@ -48,6 +48,7 @@ namespace AceJobAgency.ViewModels
         [Display(Name = "Date of Birth")]
         public DateTime? DateOfBirth { get; set; }
 
+        [Required(ErrorMessage = "Resume is required")]
         [Display(Name = "Resume")]
         public IFormFile? Resume { get; set; }
 

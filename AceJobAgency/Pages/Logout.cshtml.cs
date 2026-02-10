@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
 using AceJobAgency.Model;
 using AceJobAgency.Services;
 
@@ -37,17 +38,34 @@ namespace AceJobAgency.Pages
 
             if (memberId.HasValue)
             {
-                // Log the logout action
-                await _auditLogService.LogAsync(memberId.Value, "LOGOUT", "User logged out", HttpContext);
-
-                // Clear session ID from database to invalidate session
-                var member = await _context.Members.FindAsync(memberId.Value);
-                if (member != null)
+                // Find the current session and mark as inactive
+                var sessionId = HttpContext.Session.GetString("SessionId");
+                if (!string.IsNullOrEmpty(sessionId))
                 {
-                    member.SessionId = null;
-                    await _context.SaveChangesAsync();
+                    var userSession = await _context.UserSessions
+                        .FirstOrDefaultAsync(s => s.SessionId == sessionId && s.MemberId == memberId.Value);
+
+                    if (userSession != null)
+                    {
+                        userSession.IsActive = false;
+                        await _context.SaveChangesAsync();
+                    }
                 }
 
+                // Log the logout action
+                var auditLog = new AuditLog
+                {
+                    MemberId = memberId.Value,
+                    Action = "Logout",
+                    Details = "User logged out successfully",
+                    IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString(),
+                    UserAgent = Request.Headers["User-Agent"].ToString(),
+                    Timestamp = DateTime.UtcNow
+                };
+                
+                _context.AuditLogs.Add(auditLog);
+                await _context.SaveChangesAsync();
+                
                 _logger.LogInformation("User {MemberId} logged out", memberId.Value);
             }
 

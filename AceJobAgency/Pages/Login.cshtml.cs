@@ -177,6 +177,30 @@ namespace AceJobAgency.Pages
             var sessionId = Guid.NewGuid().ToString();
             member.SessionId = sessionId;
 
+            // Invalidate other active sessions from the same device (User-Agent) to prevent "zombie" sessions
+            var currentAgent = HttpContext.Request.Headers["User-Agent"].ToString();
+            var existingSessions = await _context.UserSessions
+                .Where(s => s.MemberId == member.Id && s.IsActive && s.UserAgent == currentAgent)
+                .ToListAsync();
+            
+            foreach (var session in existingSessions)
+            {
+                session.IsActive = false;
+            }
+
+            // Create new UserSession record
+            var userSession = new UserSession
+            {
+                MemberId = member.Id,
+                SessionId = sessionId,
+                UserAgent = HttpContext.Request.Headers["User-Agent"].ToString(),
+                IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString(),
+                CreatedAt = DateTime.UtcNow,
+                LastActive = DateTime.UtcNow,
+                IsActive = true
+            };
+            _context.UserSessions.Add(userSession);
+
             await _context.SaveChangesAsync();
 
             // Set session
@@ -186,7 +210,7 @@ namespace AceJobAgency.Pages
             HttpContext.Session.SetString("FirstName", member.FirstName);
             HttpContext.Session.SetString("LastName", member.LastName);
 
-            await _auditLogService.LogAsync(member.Id, "LOGIN_SUCCESS", "User logged in successfully", HttpContext);
+            await _auditLogService.LogAsync(member.Id, "Login", "User logged in successfully", HttpContext);
 
             _logger.LogInformation("User {Email} logged in successfully", member.Email);
         }

@@ -18,14 +18,17 @@ namespace AceJobAgency.Pages
         private readonly IWebHostEnvironment _environment;
         private readonly IConfiguration _configuration;
         private readonly ILogger<RegisterModel> _logger;
+        private readonly IAuditLogService _auditLogService;
 
         public RegisterModel(
             AuthDbContext context,
             IEncryptionService encryptionService,
             IReCaptchaService reCaptchaService,
             IWebHostEnvironment environment,
+
             IConfiguration configuration,
-            ILogger<RegisterModel> logger)
+            ILogger<RegisterModel> logger,
+            IAuditLogService auditLogService)
         {
             _context = context;
             _encryptionService = encryptionService;
@@ -33,6 +36,7 @@ namespace AceJobAgency.Pages
             _environment = environment;
             _configuration = configuration;
             _logger = logger;
+            _auditLogService = auditLogService;
         }
 
         [BindProperty]
@@ -133,7 +137,7 @@ namespace AceJobAgency.Pages
             string? resumeFileName = null;
             if (Input.Resume != null)
             {
-                var uploadsFolder = Path.Combine(_environment.WebRootPath, "uploads", "resumes");
+                var uploadsFolder = Path.Combine(_environment.ContentRootPath, "Uploads", "resumes");
                 Directory.CreateDirectory(uploadsFolder);
 
                 // Generate unique filename
@@ -145,7 +149,7 @@ namespace AceJobAgency.Pages
                     await Input.Resume.CopyToAsync(stream);
                 }
 
-                resumePath = $"/uploads/resumes/{uniqueFileName}";
+                resumePath = uniqueFileName; // Store just the filename for security
                 resumeFileName = Input.Resume.FileName;
             }
 
@@ -178,6 +182,8 @@ namespace AceJobAgency.Pages
             };
             _context.PasswordHistories.Add(passwordHistory);
             await _context.SaveChangesAsync();
+
+            await _auditLogService.LogAsync(member.Id, "Register", "User registered successfully", HttpContext);
 
             _logger.LogInformation("New member registered: {Email}", Input.Email);
 
