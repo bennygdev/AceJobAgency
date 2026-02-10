@@ -65,6 +65,9 @@ namespace AceJobAgency.Pages
                 member.TwoFactorEnabled = false;
                 member.TwoFactorSecret = null; // Clear the secret for security
                 await _context.SaveChangesAsync();
+                
+                // Update session
+                HttpContext.Session.SetString("TwoFactorEnabled", "False");
 
                 await _auditLogService.LogAsync(member.Id, "2FA_DISABLED", "User disabled 2FA", HttpContext);
                 

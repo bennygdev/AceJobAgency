@@ -209,6 +209,7 @@ namespace AceJobAgency.Pages
             HttpContext.Session.SetString("Email", member.Email);
             HttpContext.Session.SetString("FirstName", member.FirstName);
             HttpContext.Session.SetString("LastName", member.LastName);
+            HttpContext.Session.SetString("TwoFactorEnabled", member.TwoFactorEnabled.ToString());
 
             await _auditLogService.LogAsync(member.Id, "Login", "User logged in successfully", HttpContext);
 

@@ -99,45 +99,33 @@
                 <span>Ace Job Agency</span>
             </a>
             
+            <!-- Left Navigation Links (Logged In) -->
+            @if (Context.Session.GetInt32("MemberId").HasValue)
+            {
+                <nav class="ml-6 flex items-center gap-6">
+                    <a asp-page="/Index" class="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Dashboard</a>
+                    <a asp-page="/ChangePassword" class="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Change Password</a>
+                    
+                    @if (Context.Session.GetString("TwoFactorEnabled") == "True")
+                    {
+                        <a asp-page="/DisableAuthenticator" class="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">2FA</a>
+                    }
+                    else
+                    {
+                        <a asp-page="/EnableAuthenticator" class="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">2FA</a>
+                    }
+                </nav>
+            }
+
             <nav class="ml-auto flex items-center gap-4">
                 @if (Context.Session.GetInt32("MemberId").HasValue)
                 {
                     var firstName = Context.Session.GetString("FirstName") ?? "User";
                     var lastName = Context.Session.GetString("LastName") ?? "";
                     
-                    <a asp-page="/Index" class="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Dashboard</a>
+                    <span class="text-sm font-medium">@firstName @lastName</span>
                     
-                    <div id="user-dropdown" class="dropdown-menu">
-                        <button type="button" id="user-dropdown-trigger" aria-haspopup="menu" aria-controls="user-dropdown-menu" aria-expanded="false" class="flex items-center gap-2 text-sm font-medium cursor-pointer">
-                            <span class="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-semibold">
-                                @(firstName.Length > 0 ? firstName[0].ToString().ToUpper() : "")@(lastName.Length > 0 ? lastName[0].ToString().ToUpper() : "")
-                            </span>
-                            <span class="hidden sm:inline">@firstName</span>
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
-                        </button>
-                        <div id="user-dropdown-popover" data-popover aria-hidden="true" class="min-w-48">
-                            <div role="menu" id="user-dropdown-menu" aria-labelledby="user-dropdown-trigger">
-                                <a asp-page="/Index" role="menuitem">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
-                                    Dashboard
-                                </a>
-                                <hr role="separator" />
-                                <a asp-page="/ChangePassword" role="menuitem">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" /></svg>
-                                    Change Password
-                                </a>
-                                <a asp-page="/TwoFactorSetup" role="menuitem">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
-                                    Two-Factor Auth
-                                </a>
-                                <hr role="separator" />
-                                <a asp-page="/Logout" role="menuitem" class="text-destructive">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
-                                    Logout
-                                </a>
-                            </div>
-                        </div>
-                    </div>
+                    <a asp-page="/Logout" class="btn btn-sm">Logout</a>
                 }
                 else
                 {

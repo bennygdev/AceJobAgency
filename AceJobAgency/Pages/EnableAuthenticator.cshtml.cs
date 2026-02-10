@@ -44,15 +44,10 @@ namespace AceJobAgency.Pages
                 return RedirectToPage("/Index");
             }
 
-            // Generate key if not exists or if we want a fresh one for setup
-            // Usually good to generate a fresh one for a new setup attempt
             var key = KeyGeneration.GenerateRandomKey(20);
             var base32String = Base32Encoding.ToString(key);
             SharedKey = base32String;
             
-            // Store temporarily in session or DB? 
-            // Better to store in DB but not enable yet, or store in session. 
-            // Saving to DB as "Pending" or just overwriting the secret is consistent.
             member.TwoFactorSecret = base32String;
             await _context.SaveChangesAsync();
 
@@ -82,6 +77,9 @@ namespace AceJobAgency.Pages
             {
                 member.TwoFactorEnabled = true;
                 await _context.SaveChangesAsync();
+                
+                // Update session
+                HttpContext.Session.SetString("TwoFactorEnabled", "True");
 
                 await _auditLogService.LogAsync(member.Id, "2FA_ENABLED", "User enabled 2FA with Authenticator App", HttpContext);
                 
@@ -90,13 +88,6 @@ namespace AceJobAgency.Pages
             }
             else
             {
-                // Re-generate functionality for display if failed
-                // For simplicity, we just reload the page which might regenerate the key if we are not careful.
-                // But since we saved the key to DB in OnGet, we should probably read it back if we want to persist the SAME key across failures.
-                // However, OnGet generates a NEW key. 
-                // Fix: validation failure should maybe return Page with re-generated QR for the SAME key? 
-                
-                // Let's re-generate QR for the EXISTING key in DB
                 var key = member.TwoFactorSecret;
                 var uriString = new OtpUri(OtpType.Totp, key, member.Email, "Ace Job Agency").ToString();
                 using var qrGenerator = new QRCodeGenerator();
