@@ -12,18 +12,29 @@ namespace AceJobAgency.Pages
         private readonly IEncryptionService _encryptionService;
         private readonly ILogger<IndexModel> _logger;
         private readonly IWebHostEnvironment _environment;
+        private readonly IConfiguration _configuration;
 
         public IndexModel(
             AuthDbContext context, 
             IEncryptionService encryptionService,
             ILogger<IndexModel> logger,
-            IWebHostEnvironment environment)
+            IWebHostEnvironment environment,
+            IConfiguration configuration)
         {
             _context = context;
             _encryptionService = encryptionService;
             _logger = logger;
             _environment = environment;
+            _configuration = configuration;
         }
+
+        public int PasswordMinAgeMinutes { get; private set; }
+        public int PasswordMaxAgeDays { get; private set; }
+        public TimeSpan PasswordAge { get; private set; }
+        public int MinAgeProgress { get; private set; }
+        public int MaxAgeProgress { get; private set; }
+        public bool CanChangePassword { get; private set; }
+        public int DaysToExpiration { get; private set; }
 
         public async Task<IActionResult> OnGetDownloadResume()
         {
@@ -39,10 +50,6 @@ namespace AceJobAgency.Pages
                 return NotFound();
             }
 
-            // Path.Combine prevents directory traversal if filename is just a name
-            // If ResumePath is a full legacy path (starts with /), we need to handle it or migrate data. 
-            // For now, let's assume new uploads or simple filenames. 
-            // If it starts with /, we strip it to handle legacy test data if any.
             var filename = Path.GetFileName(member.ResumePath); 
             var filePath = Path.Combine(_environment.ContentRootPath, "Uploads", "resumes", filename);
 
@@ -101,6 +108,36 @@ namespace AceJobAgency.Pages
                         .OrderByDescending(l => l.Timestamp)
                         .Take(10)
                         .ToListAsync();
+
+                    // Password Policy Logic
+                    PasswordMinAgeMinutes = _configuration.GetValue<int>("Security:MinPasswordAgeMinutes", 5);
+                    PasswordMaxAgeDays = _configuration.GetValue<int>("Security:MaxPasswordAgeDays", 90);
+                    
+                    if (CurrentMember.LastPasswordChange.HasValue)
+                    {
+                        var lastChange = CurrentMember.LastPasswordChange.Value;
+                        PasswordAge = DateTime.UtcNow - lastChange;
+                        
+                        // Min Age Calculation
+                        var minAgeSpan = TimeSpan.FromMinutes(PasswordMinAgeMinutes);
+                        CanChangePassword = PasswordAge >= minAgeSpan;
+                        MinAgeProgress = CanChangePassword ? 100 : (int)((PasswordAge.TotalMinutes / PasswordMinAgeMinutes) * 100);
+                        MinAgeProgress = Math.Clamp(MinAgeProgress, 0, 100);
+
+                        // Max Age Calculation
+                        var maxAgeSpan = TimeSpan.FromDays(PasswordMaxAgeDays);
+                        DaysToExpiration = PasswordMaxAgeDays - (int)PasswordAge.TotalDays;
+                        MaxAgeProgress = (int)((PasswordAge.TotalDays / PasswordMaxAgeDays) * 100);
+                        MaxAgeProgress = Math.Clamp(MaxAgeProgress, 0, 100);
+                    }
+                    else
+                    {
+                        // Default if never changed (shouldn't happen for registered users, but handle safe)
+                        CanChangePassword = true;
+                        MinAgeProgress = 100;
+                        MaxAgeProgress = 0;
+                        DaysToExpiration = PasswordMaxAgeDays;
+                    }
                 }
             }
 

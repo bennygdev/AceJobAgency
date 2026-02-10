@@ -15,121 +15,197 @@
         </div>
 
         <div class="grid gap-6 lg:grid-cols-3">
-            <!-- Profile Card -->
-            <div class="bg-white border border-gray-200 rounded-lg overflow-hidden lg:col-span-2">
-                <div class="px-6 py-4 border-b border-gray-200">
-                    <div class="flex items-center gap-4">
-                        <div class="flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground text-lg font-bold">
-                            @Model.CurrentMember.FirstName[0]@Model.CurrentMember.LastName[0]
-                        </div>
-                        <div>
-                            <h2 class="text-lg font-semibold">@Model.CurrentMember.FirstName @Model.CurrentMember.LastName</h2>
-                            <p class="text-sm text-muted-foreground">@Model.CurrentMember.Email</p>
+            <!-- Left Column Content -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Profile Card -->
+                <div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <div class="flex items-center gap-4">
+                            <div class="flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground text-lg font-bold">
+                                @Model.CurrentMember.FirstName[0]@Model.CurrentMember.LastName[0]
+                            </div>
+                            <div>
+                                <h2 class="text-lg font-semibold">@Model.CurrentMember.FirstName @Model.CurrentMember.LastName</h2>
+                                <p class="text-sm text-muted-foreground">@Model.CurrentMember.Email</p>
+                            </div>
                         </div>
                     </div>
+                    <div class="p-6">
+                        <dl class="grid gap-4 sm:grid-cols-2">
+                            <div>
+                                <dt class="text-sm font-medium text-muted-foreground">Gender</dt>
+                                <dd class="text-sm mt-1">@Model.CurrentMember.Gender</dd>
+                            </div>
+                            <div>
+                                <dt class="text-sm font-medium text-muted-foreground">Date of Birth</dt>
+                                <dd class="text-sm mt-1">@Model.CurrentMember.DateOfBirth.ToString("MMMM dd, yyyy")</dd>
+                            </div>
+                            <div>
+                                <dt class="text-sm font-medium text-muted-foreground">NRIC (Decrypted)</dt>
+                                <dd class="text-sm mt-1 flex items-center gap-2">
+                                    <span id="nricMasked">****@Model.DecryptedNRIC?.Substring(Math.Max(0, Model.DecryptedNRIC.Length - 4))</span>
+                                    <span id="nricFull" class="hidden">@Model.DecryptedNRIC</span>
+                                    <button type="button" onclick="toggleNRIC()" class="text-muted-foreground hover:text-foreground">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                                    </button>
+                                </dd>
+                            </div>
+                            <div>
+                                <dt class="text-sm font-medium text-muted-foreground">Member Since</dt>
+                                <dd class="text-sm mt-1">@Model.CurrentMember.CreatedAt.ToString("MMMM dd, yyyy")</dd>
+                            </div>
+                        </dl>
+                    </div>
                 </div>
-                <div class="p-6">
-                    <dl class="grid gap-4 sm:grid-cols-2">
-                        <div>
-                            <dt class="text-sm font-medium text-muted-foreground">Gender</dt>
-                            <dd class="text-sm mt-1">@Model.CurrentMember.Gender</dd>
-                        </div>
-                        <div>
-                            <dt class="text-sm font-medium text-muted-foreground">Date of Birth</dt>
-                            <dd class="text-sm mt-1">@Model.CurrentMember.DateOfBirth.ToString("MMMM dd, yyyy")</dd>
-                        </div>
-                        <div>
-                            <dt class="text-sm font-medium text-muted-foreground">NRIC (Decrypted)</dt>
-                            <dd class="text-sm mt-1 flex items-center gap-2">
-                                <span id="nricMasked">****@Model.DecryptedNRIC?.Substring(Math.Max(0, Model.DecryptedNRIC.Length - 4))</span>
-                                <span id="nricFull" class="hidden">@Model.DecryptedNRIC</span>
-                                <button type="button" onclick="toggleNRIC()" class="text-muted-foreground hover:text-foreground">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
-                                </button>
-                            </dd>
-                        </div>
-                        <div>
-                            <dt class="text-sm font-medium text-muted-foreground">Member Since</dt>
-                            <dd class="text-sm mt-1">@Model.CurrentMember.CreatedAt.ToString("MMMM dd, yyyy")</dd>
-                        </div>
-                    </dl>
+
+                <!-- Who Am I Card -->
+                <div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h2 class="text-lg font-medium">Who Am I</h2>
+                    </div>
+                    <div class="p-6">
+                        <p class="text-sm text-muted-foreground whitespace-pre-wrap">@Model.CurrentMember.WhoAmI</p>
+                    </div>
                 </div>
+
+                <!-- Resume Card -->
+                @if (!string.IsNullOrEmpty(Model.CurrentMember.ResumePath))
+                {
+                    <div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                        <div class="px-6 py-4 border-b border-gray-200">
+                            <h2 class="flex items-center gap-2 text-lg font-medium">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/></svg>
+                                Resume
+                            </h2>
+                        </div>
+                        <div class="p-6">
+                            <p class="text-sm text-muted-foreground truncate">@Model.CurrentMember.ResumeFileName</p>
+                        </div>
+                        <div class="px-6 py-4 bg-gray-50 border-t border-gray-200">
+                            <a asp-page-handler="DownloadResume" class="btn-outline w-full text-center flex items-center justify-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                Download
+                            </a>
+                        </div>
+                    </div>
+                }
             </div>
 
-            <!-- Security Card -->
-            <div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
-                <div class="px-6 py-4 border-b border-gray-200">
-                    <h2 class="flex items-center gap-2 text-lg font-medium">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/></svg>
-                        Security
-                    </h2>
-                </div>
-                <div class="p-6 space-y-4">
-                    <div class="flex items-center justify-between text-sm">
-                        <span class="text-muted-foreground">2FA Status</span>
-                        @if (Model.CurrentMember.TwoFactorEnabled)
-                        {
-                            <span class="badge">Enabled</span>
-                        }
-                        else
-                        {
-                            <span class="badge-outline">Disabled</span>
-                        }
-                    </div>
-                    <div class="flex items-center justify-between text-sm">
-                        <span class="text-muted-foreground">Last Login</span>
-                        <span>@(Model.CurrentMember.LastLogin?.ToLocalTime().ToString("MMM dd, hh:mm tt") ?? "First login")</span>
-                    </div>
-                    <div class="flex items-center justify-between text-sm">
-                        <span class="text-muted-foreground">Password Changed</span>
-                        <span>@(Model.CurrentMember.LastPasswordChange?.ToString("MMM dd, yyyy") ?? "Never")</span>
-                    </div>
-                </div>
-                <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex flex-col gap-2">
-                    <a asp-page="/ChangePassword" class="btn-outline w-full text-center">Change Password</a>
-                    @if (Model.CurrentMember.TwoFactorEnabled)
-                    {
-                        <a asp-page="/DisableAuthenticator" class="btn-outline w-full text-center">Disable 2FA</a>
-                    }
-                    else
-                    {
-                        <a asp-page="/EnableAuthenticator" class="btn-outline w-full text-center">Enable 2FA</a>
-                    }
-                </div>
-            </div>
-
-            <!-- About Me Card -->
-            <div class="bg-white border border-gray-200 rounded-lg overflow-hidden lg:col-span-2">
-                <div class="px-6 py-4 border-b border-gray-200">
-                    <h2 class="text-lg font-medium">Who Am I</h2>
-                </div>
-                <div class="p-6">
-                    <p class="text-sm text-muted-foreground whitespace-pre-wrap">@Model.CurrentMember.WhoAmI</p>
-                </div>
-            </div>
-
-            <!-- Resume Card -->
-            @if (!string.IsNullOrEmpty(Model.CurrentMember.ResumePath))
-            {
+            <!-- Right Column - Security Cards -->
+            <div class="space-y-6">
+                <!-- Account Security Card -->
                 <div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
                     <div class="px-6 py-4 border-b border-gray-200">
                         <h2 class="flex items-center gap-2 text-lg font-medium">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/></svg>
-                            Resume
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/></svg>
+                            Account Security
                         </h2>
                     </div>
-                    <div class="p-6">
-                        <p class="text-sm text-muted-foreground truncate">@Model.CurrentMember.ResumeFileName</p>
+                    <div class="p-6 space-y-4">
+                        <div class="flex items-center justify-between text-sm">
+                            <span class="text-muted-foreground">Two-Factor Auth</span>
+                            @if (Model.CurrentMember.TwoFactorEnabled)
+                            {
+                                <span class="badge">Enabled</span>
+                            }
+                            else
+                            {
+                                <span class="badge-outline">Disabled</span>
+                            }
+                        </div>
+                        <div class="flex items-center justify-between text-sm">
+                            <span class="text-muted-foreground">Last Login</span>
+                            <span>@(Model.CurrentMember.LastLogin?.ToLocalTime().ToString("MMM dd, hh:mm tt") ?? "First login")</span>
+                        </div>
                     </div>
                     <div class="px-6 py-4 bg-gray-50 border-t border-gray-200">
-                        <a asp-page-handler="DownloadResume" class="btn-outline w-full text-center flex items-center justify-center gap-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                            Download
-                        </a>
+                        @if (Model.CurrentMember.TwoFactorEnabled)
+                        {
+                            <a asp-page="/DisableAuthenticator" class="btn-outline w-full text-center">Disable 2FA</a>
+                        }
+                        else
+                        {
+                            <a asp-page="/EnableAuthenticator" class="btn-outline w-full text-center">Enable 2FA</a>
+                        }
                     </div>
                 </div>
-            }
+
+                <!-- Password Security Card -->
+                <div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h2 class="flex items-center gap-2 text-lg font-medium">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                            Password Security
+                        </h2>
+                    </div>
+                    <div class="p-6 space-y-6">
+                        <!-- Minimum Age Policy -->
+                        <div>
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-sm text-muted-foreground">Minimum Age Policy</span>
+                                <span class="badge bg-indigo-500 text-white border-indigo-600">@Model.PasswordMinAgeMinutes min</span>
+                            </div>
+                            <div class="w-full bg-gray-100 rounded-full h-2.5 mb-2">
+                                <div class="bg-indigo-500 h-2.5 rounded-full" style="width: @Model.MinAgeProgress%"></div>
+                            </div>
+                            <div class="text-xs font-medium text-center">
+                                @if (Model.CanChangePassword)
+                                {
+                                    <span class="text-green-600 flex items-center justify-center gap-1">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                        You can change your password now
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="text-orange-500 flex items-center justify-center gap-1">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                                        Wait @(Model.PasswordMinAgeMinutes - (int)Model.PasswordAge.TotalMinutes) min
+                                    </span>
+                                }
+                            </div>
+                        </div>
+
+                        <!-- Maximum Age Policy -->
+                        <div>
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-sm text-muted-foreground">Maximum Age Policy</span>
+                                <span class="badge bg-rose-500 text-white border-rose-600">@Model.PasswordMaxAgeDays days</span>
+                            </div>
+                            <div class="w-full bg-gray-100 rounded-full h-2.5 mb-2">
+                                <div class="bg-rose-500 h-2.5 rounded-full" style="width: @Model.MaxAgeProgress%"></div>
+                            </div>
+                            <div class="text-xs font-medium text-center">
+                                <span class="text-green-600 flex items-center justify-center gap-1">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                    Expires in @Model.DaysToExpiration days
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="text-center text-xs text-muted-foreground">
+                            Last changed: @(Model.CurrentMember.LastPasswordChange?.ToLocalTime().ToString("MMM dd, yyyy, h:mm tt") ?? "Never")
+                        </div>
+                    </div>
+                    <div class="px-6 py-4 bg-gray-50 border-t border-gray-200">
+                        @if (Model.CanChangePassword)
+                        {
+                            <a asp-page="/ChangePassword" class="btn-outline w-full text-center flex items-center justify-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/><path d="M8 11h.01"/><path d="M16 11h.01"/></svg>
+                                Change Password
+                            </a>
+                        }
+                        else
+                        {
+                            <button disabled class="btn-outline w-full text-center opacity-50 cursor-not-allowed flex items-center justify-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/><path d="M8 11h.01"/><path d="M16 11h.01"/></svg>
+                                Change Password
+                            </button>
+                        }
+                    </div>
+                </div>
             </div>
+        </div>
             
             <!-- Active Sessions Section -->
             <div class="mt-8 bg-white border border-gray-200 rounded-lg overflow-hidden">
