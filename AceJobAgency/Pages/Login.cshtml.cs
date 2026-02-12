@@ -153,6 +153,9 @@ namespace AceJobAgency.Pages
             // Check if 2FA is enabled
             if (member.TwoFactorEnabled)
             {
+                // Clear any existing session to prevent middleware conflicts
+                HttpContext.Session.Clear();
+
                 // Store temporary data for 2FA verification
                 HttpContext.Session.SetInt32("2FA_MemberId", member.Id);
                 HttpContext.Session.SetString("2FA_Email", member.Email);

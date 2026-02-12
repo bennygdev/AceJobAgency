@@ -41,7 +41,7 @@ namespace AceJobAgency.Pages
             var memberId = HttpContext.Session.GetInt32("MemberId");
             if (!memberId.HasValue)
             {
-                return RedirectToPage("/Login");
+                return RedirectToPage("/Login", new { message = "session_expired" });
             }
 
             var member = await _context.Members.FindAsync(memberId.Value);

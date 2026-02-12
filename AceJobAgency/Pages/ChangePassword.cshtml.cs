@@ -40,7 +40,7 @@ namespace AceJobAgency.Pages
             
             if (!memberId.HasValue && !expired)
             {
-                return RedirectToPage("/Login");
+                return RedirectToPage("/Login", new { message = "session_expired" });
             }
 
             IsExpired = expired;

@@ -28,10 +28,10 @@ namespace AceJobAgency.Pages
         public async Task<IActionResult> OnGetAsync()
         {
             var memberId = HttpContext.Session.GetInt32("MemberId");
-            if (!memberId.HasValue) return RedirectToPage("/Login");
+            if (!memberId.HasValue) return RedirectToPage("/Login", new { message = "session_expired" });
 
             var member = await _context.Members.FindAsync(memberId.Value);
-            if (member == null) return RedirectToPage("/Login");
+            if (member == null) return RedirectToPage("/Login", new { message = "session_expired" });
 
             if (!member.TwoFactorEnabled)
             {
@@ -44,10 +44,10 @@ namespace AceJobAgency.Pages
         public async Task<IActionResult> OnPostAsync()
         {
             var memberId = HttpContext.Session.GetInt32("MemberId");
-            if (!memberId.HasValue) return RedirectToPage("/Login");
+            if (!memberId.HasValue) return RedirectToPage("/Login", new { message = "session_expired" });
 
             var member = await _context.Members.FindAsync(memberId.Value);
-            if (member == null) return RedirectToPage("/Login");
+            if (member == null) return RedirectToPage("/Login", new { message = "session_expired" });
 
             if (string.IsNullOrEmpty(member.TwoFactorSecret))
             {

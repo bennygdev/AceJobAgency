@@ -95,6 +95,20 @@ namespace AceJobAgency.Pages
                 member.SessionId = sessionId;
 
                 await _context.SaveChangesAsync();
+                
+                // Create UserSession
+                var userSession = new UserSession
+                {
+                    SessionId = sessionId,
+                    MemberId = member.Id,
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow,
+                    LastActive = DateTime.UtcNow,
+                    IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "Unknown",
+                    UserAgent = Request.Headers["User-Agent"].ToString()
+                };
+                _context.UserSessions.Add(userSession);
+                await _context.SaveChangesAsync();
 
                 HttpContext.Session.SetInt32("MemberId", member.Id);
                 HttpContext.Session.SetString("SessionId", sessionId);
