@@ -156,8 +156,8 @@ namespace AceJobAgency.Pages
             // Create member
             var member = new Member
             {
-                FirstName = Input.FirstName.Trim(),
-                LastName = Input.LastName.Trim(),
+                FirstName = System.Text.Encodings.Web.HtmlEncoder.Default.Encode(Input.FirstName.Trim()),
+                LastName = System.Text.Encodings.Web.HtmlEncoder.Default.Encode(Input.LastName.Trim()),
                 Gender = Input.Gender,
                 NRIC = _encryptionService.Encrypt(Input.NRIC), // Encrypted
                 Email = Input.Email.ToLower().Trim(),
@@ -165,7 +165,7 @@ namespace AceJobAgency.Pages
                 DateOfBirth = Input.DateOfBirth!.Value,
                 ResumePath = resumePath,
                 ResumeFileName = resumeFileName,
-                WhoAmI = Input.WhoAmI, // Razor handles output encoding for XSS prevention
+                WhoAmI = System.Text.Encodings.Web.HtmlEncoder.Default.Encode(Input.WhoAmI), // Encoded for XSS prevention
                 CreatedAt = DateTime.UtcNow,
                 LastPasswordChange = DateTime.UtcNow
             };
