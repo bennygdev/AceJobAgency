@@ -72,7 +72,7 @@ namespace AceJobAgency.Services
 
                 if (string.IsNullOrEmpty(apiKey))
                 {
-                    _logger.LogWarning("SMTP2GO API Key not configured. Email to {Email} not sent.", toEmail);
+                    _logger.LogWarning("SMTP2GO API Key not configured. Email to {Email} not sent.", MaskEmail(toEmail));
                     return;
                 }
 
@@ -89,21 +89,34 @@ namespace AceJobAgency.Services
 
                 if (response.IsSuccessStatusCode)
                 {
-                    _logger.LogInformation("Email sent successfully to {Email} via API", toEmail);
+                    _logger.LogInformation("Email sent successfully to {Email} via API", MaskEmail(toEmail));
                 }
                 else
                 {
                    var errorContent = await response.Content.ReadAsStringAsync();
-                   _logger.LogError("Failed to send email to {Email}. Status: {Status}. Details: {Details}", toEmail, response.StatusCode, errorContent);
+                   _logger.LogError("Failed to send email to {Email}. Status: {Status}. Details: {Details}", MaskEmail(toEmail), response.StatusCode, errorContent);
                    // Throwing exception to let caller know it failed (e.g. for retries or user feedback)
                    throw new Exception($"Failed to send email: {response.StatusCode} - {errorContent}");
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Exception while sending email to {Email}", toEmail);
+                _logger.LogError(ex, "Exception while sending email to {Email}", MaskEmail(toEmail));
                 throw;
             }
+        }
+
+        private string MaskEmail(string email)
+        {
+            if (string.IsNullOrEmpty(email)) return "Unknown";
+            var parts = email.Split('@');
+            if (parts.Length != 2) return "REDACTED_EMAIL";
+            
+            var name = parts[0];
+            var domain = parts[1];
+            
+            if (name.Length <= 2) return $"{name}***@{domain}";
+            return $"{name[0]}***{name[^1]}@{domain}";
         }
     }
 }

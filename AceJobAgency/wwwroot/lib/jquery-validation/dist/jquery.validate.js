@@ -684,6 +684,10 @@ $.extend( $.validator, {
 		},
 
 		clean: function( selector ) {
+			// CodeQL Remediation: Prevent HTML injection
+			if ( typeof selector === "string" && selector.indexOf("<") === 0 ) {
+				return undefined;
+			}
 			return $( selector )[ 0 ];
 		},
 
@@ -1069,7 +1073,12 @@ $.extend( $.validator, {
 			}
 
 			// Always apply ignore filter
-			return $( element ).not( this.settings.ignore )[ 0 ];
+			// CodeQL Remediation: Prevent HTML injection in ignore setting
+			var ignore = this.settings.ignore;
+			if ( typeof ignore === "string" && ignore.indexOf("<") === 0 ) {
+				ignore = "";
+			}
+			return $( element ).not( ignore )[ 0 ];
 		},
 
 		checkable: function( element ) {
