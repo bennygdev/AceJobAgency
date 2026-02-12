@@ -684,9 +684,13 @@ $.extend( $.validator, {
 		},
 
 		clean: function( selector ) {
-			// CodeQL Remediation: Prevent HTML injection
-			if ( typeof selector === "string" && selector.indexOf("<") === 0 ) {
-				return undefined;
+			// CodeQL Remediation: Use document.querySelector for strings to prevent HTML injection
+			if ( typeof selector === "string" ) {
+				try {
+					return document.querySelector( selector );
+				} catch ( e ) {
+					return undefined;
+				}
 			}
 			return $( selector )[ 0 ];
 		},
@@ -1072,13 +1076,23 @@ $.extend( $.validator, {
 				element = this.findByName( element.name );
 			}
 
-			// Always apply ignore filter
-			// CodeQL Remediation: Prevent HTML injection in ignore setting
-			var ignore = this.settings.ignore;
-			if ( typeof ignore === "string" && ignore.indexOf("<") === 0 ) {
-				ignore = "";
+			// Safely wrap element to prevent HTML injection
+			var safeElement;
+			if ( element instanceof jQuery ) {
+				safeElement = element;
+			} else if ( element instanceof HTMLElement || element instanceof NodeList ) {
+				safeElement = $( element );
+			} else if ( typeof element === "string" ) {
+				try {
+					var found = document.querySelectorAll( element );
+					safeElement = $( found );
+				} catch ( e ) {
+					safeElement = $( [] );
+				}
+			} else {
+				safeElement = $( element || [] );
 			}
-			return $( element ).not( ignore )[ 0 ];
+			return safeElement.not( this.settings.ignore )[ 0 ];
 		},
 
 		checkable: function( element ) {

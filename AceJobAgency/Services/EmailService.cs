@@ -72,7 +72,7 @@ namespace AceJobAgency.Services
 
                 if (string.IsNullOrEmpty(apiKey))
                 {
-                    _logger.LogWarning("SMTP2GO API Key not configured. Email to {Email} not sent.", MaskEmail(toEmail));
+                    _logger.LogWarning("SMTP2GO API Key not configured. Email not sent.");
                     return;
                 }
 
@@ -89,19 +89,18 @@ namespace AceJobAgency.Services
 
                 if (response.IsSuccessStatusCode)
                 {
-                    _logger.LogInformation("Email sent successfully to {Email} via API", MaskEmail(toEmail));
+                    _logger.LogInformation("Email sent successfully via API.");
                 }
                 else
                 {
-                   var errorContent = await response.Content.ReadAsStringAsync();
-                   _logger.LogError("Failed to send email to {Email}. Status: {Status}. Details: {Details}", MaskEmail(toEmail), response.StatusCode, errorContent);
+                   _logger.LogError("Failed to send email. Status: {Status}.", response.StatusCode);
                    // Throwing exception to let caller know it failed (e.g. for retries or user feedback)
-                   throw new Exception($"Failed to send email: {response.StatusCode} - {errorContent}");
+                   throw new Exception($"Failed to send email: {response.StatusCode}");
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Exception while sending email to {Email}", MaskEmail(toEmail));
+                _logger.LogError(ex, "Exception while sending email.");
                 throw;
             }
         }
